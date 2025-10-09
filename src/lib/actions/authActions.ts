@@ -21,7 +21,7 @@ export async function loginAction(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/account");
+  redirect("/");
   return { success: "Login successful!" };
 }
 

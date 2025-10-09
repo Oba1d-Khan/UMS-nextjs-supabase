@@ -1,10 +1,13 @@
-import Image from "next/image";
-import Link from "next/link";
+import Dashboard from "@/components/features/dashboard/Dashboard";
+import LandingPage from "@/components/features/landing/landing";
+import { fetchUser } from "@/utils/fetchSupabase/fetchSupabaseData";
 
-export default function Home() {
+export default async function Home() {
+  const { user } = await fetchUser();
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main>Homepage</main>
-    </div>
+    <main className="root-layout">
+      {user ? <Dashboard user={user} /> : <LandingPage />}
+    </main>
   );
 }
