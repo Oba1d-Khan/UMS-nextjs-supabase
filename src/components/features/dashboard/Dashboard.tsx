@@ -14,6 +14,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import Link from "next/link";
 
 interface DashboardStats {
   totalRevenue: number;
@@ -232,9 +233,15 @@ export default function Dashboard({ user }: { user: User }) {
                 <TrendingUp className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Users className="h-4 w-4 mr-2" />
-                Manage Users
+              <Button
+                className="w-full justify-start "
+                // variant="outline"
+                asChild
+              >
+                <Link href={"/user-management"}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Manage Users
+                </Link>
               </Button>
               <Button className="w-full justify-start" variant="outline">
                 <DollarSign className="h-4 w-4 mr-2" />

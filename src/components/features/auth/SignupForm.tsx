@@ -27,8 +27,10 @@ export default function SignupForm() {
   const form = useForm<SignupSchema>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      username: "",
+      full_name: "",
+      designation: "",
       email: "",
+      phone: "",
       password: "",
     },
   });
@@ -52,36 +54,60 @@ export default function SignupForm() {
     setShowPassword(!showPassword);
   };
 
+  const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+    if (value.length <= 14) {
+      form.setValue("phone", value);
+    }
+  };
+
   return (
     <Card className="border-0 shadow-none">
       <CardHeader className="text-center pt-4">
         <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
-        {/* <CardDescription>Get started with UMS today</CardDescription> */}
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">
-                Username
+              <Label htmlFor="full_name" className="text-sm font-medium">
+                Full Name *
               </Label>
               <Input
-                {...form.register("username")}
-                id="username"
-                placeholder="Enter your username"
+                {...form.register("full_name")}
+                id="full_name"
+                placeholder="Enter your full name"
                 className="h-11"
                 disabled={isPending}
               />
-              {form.formState.errors.username && (
+              {form.formState.errors.full_name && (
                 <p className="text-sm text-destructive font-medium">
-                  {form.formState.errors.username.message}
+                  {form.formState.errors.full_name.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="designation" className="text-sm font-medium">
+                Designation *
+              </Label>
+              <Input
+                {...form.register("designation")}
+                id="designation"
+                placeholder="Enter your designation"
+                className="h-11"
+                disabled={isPending}
+              />
+              {form.formState.errors.designation && (
+                <p className="text-sm text-destructive font-medium">
+                  {form.formState.errors.designation.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                Email
+                Email *
               </Label>
               <Input
                 {...form.register("email")}
@@ -99,8 +125,29 @@ export default function SignupForm() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium">
+                Phone Number *
+              </Label>
+              <Input
+                {...form.register("phone")}
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+                className="h-11"
+                disabled={isPending}
+                onChange={handlePhoneInput}
+                maxLength={14}
+              />
+              {form.formState.errors.phone && (
+                <p className="text-sm text-destructive font-medium">
+                  {form.formState.errors.phone.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
-                Password
+                Password *
               </Label>
               <div className="relative">
                 <Input

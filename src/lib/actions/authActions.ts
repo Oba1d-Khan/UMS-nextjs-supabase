@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/utils/supabase/server";
+import { createClient as createServerClient } from "@/utils/supabase/server";
 
 export async function loginAction(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await createServerClient();
 
   const data = {
     email: formData.get("email") as string,
@@ -26,17 +26,29 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function signupAction(formData: FormData) {
-  const supabase = await createClient();
+  const supabaseServer = await createServerClient();
 
-  const userData = {
+  const signUpPayload = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
+    phone: formData.get("phone") as string,
+    options: {
+      data: {
+        full_name: formData.get("full_name") as string,
+        designation: formData.get("designation") as string,
+        phone: formData.get("phone") as string,
+      },
+    },
   };
 
-  const { data, error } = await supabase.auth.signUp(userData);
+  console.log("signUpPayload", signUpPayload);
+
+  const { data, error } = await supabaseServer.auth.signUp(signUpPayload);
+
+  console.log("data-signUp", data);
 
   if (error) {
-    console.error("Supabase Signup  error:", error.message);
+    console.error("Supabase Signup error:", error.message);
     return { error: error.message };
   }
 
