@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +12,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { User } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import Link from "next/link";
 
 interface DashboardStats {
@@ -23,7 +22,7 @@ interface DashboardStats {
   bounceRate: number;
 }
 
-export default function Dashboard({ user }: { user: User }) {
+export default function Dashboard({ user }: { user: SupabaseUser }) {
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     newUsers: 0,
@@ -31,14 +30,12 @@ export default function Dashboard({ user }: { user: User }) {
     bounceRate: 0,
   });
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Simulate fetching data
     const fetchDashboardData = async () => {
       setLoading(true);
-      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Mock data - replace with actual Supabase queries
       setStats({
         totalRevenue: 12450,
         newUsers: 234,
@@ -102,14 +99,18 @@ export default function Dashboard({ user }: { user: User }) {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
-      {/* Header */}
+      {/* Clean Header - Only Welcome Message */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Dashboard - {user?.user_metadata?.email}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Welcome back! Here's what's happening today.
-        </p>
+        <div className="flex flex-col">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">
+              Welcome back, {user?.user_metadata?.full_name || "User"}
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Here's your business overview for today
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -233,11 +234,7 @@ export default function Dashboard({ user }: { user: User }) {
                 <TrendingUp className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
-              <Button
-                className="w-full justify-start "
-                // variant="outline"
-                asChild
-              >
+              <Button className="w-full justify-start" asChild>
                 <Link href={"/user-management"}>
                   <Users className="h-4 w-4 mr-2" />
                   Manage Users

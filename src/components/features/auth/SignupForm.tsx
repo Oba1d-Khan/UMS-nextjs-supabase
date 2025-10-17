@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { signupAction } from "@/lib/actions/authActions";
 import { signupSchema, type SignupSchema } from "@/lib/validations/authSchema";
 import Link from "next/link";
-
 import {
   Card,
   CardContent,
@@ -18,12 +17,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, UserPlus, Eye, EyeOff } from "lucide-react";
+import { Loader2, UserPlus, Eye, EyeOff, Mail, Phone } from "lucide-react";
 
 export default function SignupForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const [signupMethod, setSignupMethod] = useState<"email" | "phone">("email");
+
   const form = useForm<SignupSchema>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -39,9 +40,10 @@ export default function SignupForm() {
     setMessage(null);
 
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) =>
-      formData.append(key, value)
-    );
+    Object.entries(values).forEach(([key, value]) => {
+      if (value) formData.append(key, value);
+    });
+    formData.append("signup_method", signupMethod);
 
     startTransition(async () => {
       const res = await signupAction(formData);
@@ -50,112 +52,177 @@ export default function SignupForm() {
     });
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+    const value = e.target.value.replace(/\D/g, "");
     if (value.length <= 14) {
       form.setValue("phone", value);
+      localStorage.setItem("pending_phone_signup", value);
     }
+  };
+
+  const toggleSignupMethod = () => {
+    const newMethod = signupMethod === "email" ? "phone" : "email";
+    setSignupMethod(newMethod);
+    form.resetField("email");
+    form.resetField("phone");
   };
 
   return (
     <Card className="border-0 shadow-none">
       <CardHeader className="text-center pt-4">
         <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
+        <CardDescription>
+          Choose how you'd like to sign in to your account
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Signup Method Toggle */}
+        <div className="flex justify-center">
+          <div className="bg-muted p-1.5 rounded-lg flex">
+            <Button
+              type="button"
+              variant={signupMethod === "email" ? "default" : "ghost"}
+              size="sm"
+              onClick={toggleSignupMethod}
+              className={`flex items-center gap-2 ${
+                signupMethod === "email" ? "shadow-sm" : ""
+              }`}
+              disabled={isPending}
+            >
+              <Mail className="h-4 w-4" />
+              Email
+            </Button>
+            <Button
+              type="button"
+              variant={signupMethod === "phone" ? "default" : "ghost"}
+              size="sm"
+              onClick={toggleSignupMethod}
+              className={`flex items-center gap-2 ${
+                signupMethod === "phone" ? "shadow-sm" : ""
+              }`}
+              disabled={isPending}
+            >
+              <Phone className="h-4 w-4" />
+              Phone
+            </Button>
+          </div>
+        </div>
+
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Full Name */}
             <div className="space-y-2">
-              <Label htmlFor="full_name" className="text-sm font-medium">
-                Full Name *
-              </Label>
+              <Label htmlFor="full_name">Full Name *</Label>
               <Input
                 {...form.register("full_name")}
                 id="full_name"
                 placeholder="Enter your full name"
-                className="h-11"
                 disabled={isPending}
+                className="h-11 mt-1"
               />
               {form.formState.errors.full_name && (
-                <p className="text-sm text-destructive font-medium">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.full_name.message}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="designation" className="text-sm font-medium">
-                Designation *
-              </Label>
+            {/* Designation */}
+            <div className="space-y-3">
+              <Label htmlFor="designation">Designation *</Label>
               <Input
                 {...form.register("designation")}
                 id="designation"
                 placeholder="Enter your designation"
-                className="h-11"
                 disabled={isPending}
+                className="h-11 mt-1"
               />
               {form.formState.errors.designation && (
-                <p className="text-sm text-destructive font-medium">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.designation.message}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email *
-              </Label>
-              <Input
-                {...form.register("email")}
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="h-11"
-                disabled={isPending}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive font-medium">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
+            {/* Auth Field */}
+            {signupMethod === "email" ? (
+              <>
+                {/* Email */}
+                <div className="space-y-3">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    {...form.register("email")}
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    disabled={isPending}
+                    className="h-11 mt-1"
+                  />
+                  {form.formState.errors.email && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium">
-                Phone Number *
-              </Label>
-              <Input
-                {...form.register("phone")}
-                id="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-                className="h-11"
-                disabled={isPending}
-                onChange={handlePhoneInput}
-                maxLength={14}
-              />
-              {form.formState.errors.phone && (
-                <p className="text-sm text-destructive font-medium">
-                  {form.formState.errors.phone.message}
-                </p>
-              )}
-            </div>
+                {/* Contact No. (required bio field) */}
+                <div className="space-y-3">
+                  <Label htmlFor="phone">Contact No. *</Label>
+                  <Input
+                    {...form.register("phone", {
+                      required: "Contact number is required",
+                    })}
+                    id="phone"
+                    type="tel"
+                    placeholder="Enter your contact number"
+                    onChange={handlePhoneInput}
+                    disabled={isPending}
+                    maxLength={14}
+                    className="h-11 mt-1"
+                  />
+                  {form.formState.errors.phone && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.phone.message}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Phone Signup */
+              <div className="space-y-3">
+                <Label htmlFor="phone">Phone No. *</Label>
+                <Input
+                  {...form.register("phone", {
+                    required: "Phone number is required",
+                  })}
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  onChange={handlePhoneInput}
+                  disabled={isPending}
+                  maxLength={14}
+                  className="h-11 mt-1"
+                />
+                {form.formState.errors.phone && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.phone.message}
+                  </p>
+                )}
+              </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Password *
-              </Label>
+            {/* Password */}
+            <div className="space-y-3">
+              <Label htmlFor="password">Password *</Label>
               <div className="relative">
                 <Input
                   {...form.register("password")}
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
-                  className="h-11 pr-10"
+                  className="pr-10 h-11 mt-1"
                   disabled={isPending}
                 />
                 <Button
@@ -171,24 +238,17 @@ export default function SignupForm() {
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
-                  <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
-                  </span>
                 </Button>
               </div>
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive font-medium">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.password.message}
                 </p>
               )}
             </div>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full h-11 text-base font-medium"
-            disabled={isPending}
-          >
+          <Button type="submit" className="w-full h-11" disabled={isPending}>
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -215,7 +275,7 @@ export default function SignupForm() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-semibold text-primary hover:underline transition-colors"
+            className="font-semibold text-primary hover:underline"
           >
             Sign in
           </Link>

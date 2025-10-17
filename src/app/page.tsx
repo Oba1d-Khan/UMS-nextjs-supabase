@@ -4,6 +4,7 @@ import { fetchUser } from "@/utils/fetchSupabase/fetchSupabaseData";
 
 export default async function Home() {
   const { user } = await fetchUser();
+  console.log("user", user);
 
   return (
     <main className="root-layout">

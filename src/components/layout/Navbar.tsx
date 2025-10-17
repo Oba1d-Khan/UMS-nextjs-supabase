@@ -7,8 +7,17 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
-import type { Session } from "@supabase/supabase-js"; // It's good practice to import the type
+import { Moon, Sun, User, Settings, LogOut } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Navbar() {
   const router = useRouter();
@@ -16,7 +25,6 @@ export default function Navbar() {
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
-  // 1. Store the full session object instead of just a boolean
   const [session, setSession] = useState<Session | null>(null);
 
   // Avoid hydration mismatch for theme
@@ -24,9 +32,8 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
-  // 2. Simplified auth listener
+  // Auth listener
   useEffect(() => {
-    // Listener fires immediately with the initial session, so no need for a separate getSession()
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -36,7 +43,6 @@ export default function Navbar() {
       }
     });
 
-    // Cleanup subscription on unmount
     return () => subscription.unsubscribe();
   }, [supabase]);
 
@@ -49,10 +55,21 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  // Theme toggle logic remains the same
   const handleThemeToggle = () => {
     const currentTheme = resolvedTheme || theme;
     setTheme(currentTheme === "dark" ? "light" : "dark");
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!session?.user) return "U";
+    const fullName = session.user.user_metadata?.full_name || "";
+    return fullName
+      .split(" ")
+      .map((name: string) => name[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const displayTheme = mounted ? resolvedTheme || theme : "light";
@@ -66,10 +83,9 @@ export default function Navbar() {
       {/* Render content only after mounting to avoid hydration issues */}
       {mounted && (
         <div className="flex gap-6 items-center text-foreground">
-          {/* Use the session object for conditional rendering */}
+          {/* Navigation Links */}
           {session ? (
             <>
-              {/* Logged-in links */}
               <Link
                 href="/"
                 className="hover:text-primary transition-colors duration-200"
@@ -77,22 +93,14 @@ export default function Navbar() {
                 Home
               </Link>
               <Link
-                href="/account"
+                href="/dashboard"
                 className="hover:text-primary transition-colors duration-200"
               >
-                Account
+                Dashboard
               </Link>
-              <Button
-                variant="ghost"
-                onClick={handleSignout}
-                className="hover:bg-destructive hover:text-destructive-foreground transition-colors duration-200"
-              >
-                Signout
-              </Button>
             </>
           ) : (
             <>
-              {/* Logged-out links */}
               <Link
                 href="/login"
                 className="hover:text-primary transition-colors duration-200"
@@ -108,9 +116,9 @@ export default function Navbar() {
             </>
           )}
 
-          {/* 3. Moved duplicated elements outside the conditional */}
           <div className="border-l border-border h-6"></div>
 
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -119,6 +127,61 @@ export default function Navbar() {
           >
             {displayTheme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </Button>
+
+          {/* User Avatar Dropdown */}
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src={session.user.user_metadata?.avatar_url}
+                      alt={session.user.user_metadata?.full_name || "User"}
+                    />
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {session.user.user_metadata?.full_name || "User"}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session.user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Manage Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignout}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       )}
     </nav>
